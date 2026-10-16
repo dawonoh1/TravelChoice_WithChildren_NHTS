@@ -5,17 +5,34 @@ date: "2025-09-19"
 output: html_document
 ---
 
+```{r eval=FALSE, include=FALSE}
+library(reticulate)
+
+virtualenv_create("r-reticulate")
+
+virtualenv_install(
+  "r-reticulate",
+  packages = c("pip", "setuptools", "wheel"),
+  ignore_installed = TRUE
+)
+
+use_virtualenv("r-reticulate", required = TRUE)
+
+reticulate::py_install("ipython")
+```
+
 ```{python}
 import pyodbc
 import pandas as pd
 import os
 from IPython.display import display 
 import numpy as np
+import re
 ```
 
 ```{python}
 # Define the folder path
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 
 # Function to read CSV with encoding handling
 def read_csv_with_encoding(file_path):
@@ -40,7 +57,7 @@ def read_csv_with_encoding(file_path):
         return pd.read_csv(file_path, encoding="ISO-8859-1")  # Fallback to ISO-8859-1
       
 # Define the folder path
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 trippub = read_csv_with_encoding(os.path.join(folder_path, "trippub.csv"))
 
 
@@ -102,7 +119,7 @@ def read_csv_with_encoding(file_path):
     except UnicodeDecodeError:
         return pd.read_csv(file_path, encoding="ISO-8859-1")
 
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 trippubid = read_csv_with_encoding(os.path.join(folder_path, "trippub_id.csv"))
 
 
@@ -298,7 +315,7 @@ def read_csv_with_encoding(file_path):
     except UnicodeDecodeError:
         return pd.read_csv(file_path, encoding="ISO-8859-1")
 
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 
 hhpub = read_csv_with_encoding(os.path.join(folder_path, "hhpub.csv"))
 perpub = read_csv_with_encoding(os.path.join(folder_path, "perpub.csv"))
@@ -416,7 +433,7 @@ import os
 import numpy as np
 import pandas as pd
 
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 df_path = os.path.join(folder_path, "us_merged_filtered.csv")
 df_2 = pd.read_csv(df_path, encoding="utf-8-sig")
 
@@ -536,14 +553,14 @@ df["YOUNGCHILD"] = pd.to_numeric(df["YOUNGCHILD"], errors="coerce")
 df = df.dropna(subset=["HOUSEID"])  # keep households even if age missing on some rows
 
 # ---- Person-level flags (only ranges the roster actually contains) ----
-is_6_9   = df["R_AGE_IMP"].between(6, 9, inclusive="both").fillna(False)
+is_5_9   = df["R_AGE_IMP"].between(5, 9, inclusive="both").fillna(False)
 is_10_17 = df["R_AGE_IMP"].between(10, 17, inclusive="both").fillna(False)
 
 # ---- Count people by household ----
 by_hh = (
-    df.assign(is_6_9=is_6_9.astype(int), is_10_17=is_10_17.astype(int))
+    df.assign(is_5_9=is_5_9.astype(int), is_10_17=is_10_17.astype(int))
       .groupby("HOUSEID", as_index=False)
-      .agg(num_6_9=("is_6_9", "sum"),
+      .agg(num_5_9=("is_5_9", "sum"),
            num_10_17=("is_10_17", "sum"))
 )
 
@@ -557,11 +574,11 @@ by_hh["YOUNGCHILD"] = by_hh["YOUNGCHILD"].fillna(0).astype(int)
 
 # ---- Final household counts ----
 # Under 10 (0–9) = 0–5 (from YOUNGCHILD) + 6–9 (from roster)
-by_hh["numu10inhh"]   = by_hh["YOUNGCHILD"] + by_hh["num_6_9"]
+by_hh["numu10inhh"]   = by_hh["YOUNGCHILD"] + by_hh["num_5_9"]
 by_hh["num1017inhh"]  = by_hh["num_10_17"]
 
 # (Optional) keep a tidy subset
-hh = by_hh[["HOUSEID", "numu10inhh", "num1017inhh"]].copy()
+hh = by_hh[["HOUSEID", "num_5_9", "numu10inhh", "num1017inhh"]].copy()
 
 # ---- Distributions (share of households by count) ----
 def dist_table(series, total):
@@ -581,6 +598,23 @@ print(dist_numu10, "\n")
 print("Distribution of num1017inhh (10–17 via roster):")
 print(dist_num1017)
 ```
+```{python}
+# Merge the household-level child counts back into the person-level df
+df = df.merge(
+    by_hh[["HOUSEID", "num_5_9", "numu10inhh", "num1017inhh"]],
+    on="HOUSEID",
+    how="left"
+)
+
+# (Optional) ensure integer type
+df["numu10inhh"]  = df["numu10inhh"].fillna(0).astype(int)
+df["num1017inhh"] = df["num1017inhh"].fillna(0).astype(int)
+
+df[["HOUSEID", "R_AGE_IMP", "numu10inhh", "num1017inhh"]].head()
+```
+
+
+
 # Drop excessive 10-17 HH
 ```{python}
 # Step 1: filter households in hh
@@ -606,154 +640,82 @@ df_2 = pd.read_csv(df_path, encoding="utf-8-sig")
 df_2.columns = df_2.columns.str.strip()
 df_1.columns = df_1.columns.str.strip()
 
-# 0) Keep respondents age 23–69
+# 0) Respondent filter (yours)
 df_2 = df_2[(pd.to_numeric(df_2["R_AGE_IMP"], errors="coerce") >= 23) &
             (pd.to_numeric(df_2["R_AGE_IMP"], errors="coerce") <= 69)]
 
-# 1) Identify ONTD columns and coerce to nullable ints
-ontd_cols = [c for c in df_2.columns if c.upper().startswith("ONTD_P")]
+# 1) Identify ONTD_P* and reshape as PERSONIDs (values)
+ontd_cols = [c for c in df_2.columns if re.fullmatch(r'(?i)ONTD_P\d+', c)]
 if not ontd_cols:
     raise KeyError("No ONTD_P* columns found in df_2.")
 
-   # Coerce them to numeric (works for both 0/1 flags and ID values)
-for c in ontd_cols:
-    df_2[c] = pd.to_numeric(df_2[c], errors="coerce")
-    
-# 2) Person-level lookup: (HOUSEID, PERSONID) -> companion age
-age_lookup = (
-    df_1[["HOUSEID", "PERSONID", "R_AGE_IMP"]]
-      .drop_duplicates()
-      .rename(columns={"PERSONID": "COMP_ID", "R_AGE_IMP": "ACC_AGE"})
-)
-
-# 3) Melt trips to long; ensure the var name is ONTD_COL
-m = df_2[["TRIPID", "HOUSEID"] + ontd_cols].melt(
-    id_vars=["TRIPID", "HOUSEID"],
+m = df_2[["TRIPID","HOUSEID"] + ontd_cols].melt(
+    id_vars=["TRIPID","HOUSEID"],
     value_vars=ontd_cols,
     var_name="ONTD_COL",
-    value_name="VAL"
+    value_name="COMP_ID"
 )
+m["COMP_ID"] = pd.to_numeric(m["COMP_ID"], errors="coerce").astype("Int64")
+long = m.dropna(subset=["COMP_ID"]).copy()
+long = long[long["COMP_ID"] > 0]
 
-# 4) Detect schema (flags vs IDs) and build `long`
-val_non_na = m["VAL"].dropna()
-is_flag_schema = val_non_na.isin([0, 1]).all()
-
-if is_flag_schema:
-    # Flag schema: keep rows where flag == 1
-    long = m.loc[m["VAL"] == 1].copy()
-    # Parse COMP_ID from ONTD_P* suffix (ONTD_P7 -> 7)
-    long["COMP_ID"] = long["ONTD_COL"].str.extract(r"ONTD_P(\d+)", expand=False).astype("Int64")
-else:
-    # ID schema: keep rows with non-null person IDs
-    long = m.dropna(subset=["VAL"]).copy()
-    long["COMP_ID"] = long["VAL"].astype("Int64")
-    
-   # Sanity checks so we don't get KeyError surprises again
-assert "ONTD_COL" in long.columns or not is_flag_schema, "Expected ONTD_COL in flag schema."
-assert "COMP_ID" in long.columns, "COMP_ID not created."
-
-# 5) Attach companion ages; ACC_AGE lives only in the long table
-long = (
-    long.merge(age_lookup, on=["HOUSEID", "COMP_ID"], how="left")
-        [["TRIPID", "HOUSEID", "COMP_ID", "ACC_AGE"]]
-        .drop_duplicates()
+# 2) Merge ages (df_1 has ages only for >=5)
+age_lookup = (
+    df_1[["HOUSEID","PERSONID","R_AGE_IMP"]]
+      .drop_duplicates()
+      .rename(columns={"PERSONID":"COMP_ID","R_AGE_IMP":"ACC_AGE"})
 )
-
-# 6) Per-trip counts from ACC_AGE (companions)
+long = (long.merge(age_lookup, on=["HOUSEID","COMP_ID"], how="left")
+            [["TRIPID","HOUSEID","COMP_ID","ACC_AGE"]]
+            .drop_duplicates())
 long["ACC_AGE"] = pd.to_numeric(long["ACC_AGE"], errors="coerce")
 
-long["is_6_9"]   = long["ACC_AGE"].between(6, 9, inclusive="both")
-long["is_1017"]  = long["ACC_AGE"].between(10, 17, inclusive="both")
+# 3) Per-trip counts
+# HH companions total (excl. respondent)
+df_2["HH_ONTD"] = pd.to_numeric(df_2.get("HH_ONTD"), errors="coerce")
+hh_comp_total = (df_2[["TRIPID","HH_ONTD"]]
+                 .drop_duplicates()
+                 .assign(hh_comp_total=lambda d: (d["HH_ONTD"] - 1).clip(lower=0))
+                 .set_index("TRIPID")["hh_comp_total"])
 
-counts_age = (
-    long.groupby("TRIPID", as_index=True)
-        .agg(num_6_9=("is_6_9", "sum"),
-             PartyNum1017=("is_1017", "sum"))
+# Known-age companions among ONTD (these are your >=5s)
+known_age_comp = (long["ACC_AGE"].notna()
+                  .groupby(long["TRIPID"])
+                  .sum()
+                  .astype("Int64")
+                  .rename("known_age_comp"))
+
+# Optional: split into buckets you already use
+known_buckets = (
+    long.dropna(subset=["ACC_AGE"])
+        .assign(
+            is_5_9   = lambda d: d["ACC_AGE"].between(5, 9, inclusive="both"),
+            is_10_17 = lambda d: d["ACC_AGE"].between(10,17, inclusive="both")
+        )
+        .groupby("TRIPID", as_index=True)
+        .agg(acc_5_9=("is_5_9","sum"),
+             PartyNum1017=("is_10_17","sum"))
         .astype("Int64")
 )
 
-# --- 6a) One YOUNGCHILD value per HOUSEID (0–5 count) ---
+# 0–4 on trip inferred as unknown-age household companions
+counts = (hh_comp_total.to_frame()
+          .join(known_age_comp, how="left")
+          .fillna({"known_age_comp": 0}))
+counts["acc_0_4"] = (counts["hh_comp_total"] - counts
+["known_age_comp"]).clip(lower=0).astype("Int64")
 
-# Prefer df_1 if it has YOUNGCHILD; else fall back to df_2
-if "YOUNGCHILD" in df_1.columns:
-    yc_src = df_1[["HOUSEID", "YOUNGCHILD"]].dropna(subset=["YOUNGCHILD"])
-elif "YOUNGCHILD" in df_2.columns:
-    yc_src = df_2[["HOUSEID", "YOUNGCHILD"]].dropna(subset=["YOUNGCHILD"])
-else:
-    raise KeyError("YOUNGCHILD not found in df_1 or df_2; needed for 0–5 counts.")
+# PartyNumu10 = 0–4 + 5–9
+counts = counts.join(known_buckets, how="left").fillna({"acc_5_9": 0, "PartyNum1017": 0})
+counts["PartyNumu10"] = (counts["acc_0_4"] + counts["acc_5_9"]).astype("Int64")
 
-yc = (
-    yc_src
-    .drop_duplicates("HOUSEID")
-    .assign(YOUNGCHILD=pd.to_numeric(yc_src["YOUNGCHILD"], errors="coerce"))
-    .fillna({"YOUNGCHILD": 0})
-)
-
-# Map HOUSEID → YOUNGCHILD onto trips (via df_2 which has TRIPID, HOUSEID)
-trips_yc = (
-    df_2[["TRIPID", "HOUSEID"]]
-      .drop_duplicates()
-      .merge(yc, on="HOUSEID", how="left")
-      .fillna({"YOUNGCHILD": 0})
-)
-trips_yc["YOUNGCHILD"] = trips_yc["YOUNGCHILD"].astype("Int64")
-
-# --- 6b) Combine to get PartyNumu10 per trip ---
-counts = (
-    counts_age
-    .merge(trips_yc[["TRIPID", "YOUNGCHILD"]].set_index("TRIPID"),
-           left_index=True, right_index=True, how="left")
-    .fillna({"YOUNGCHILD": 0})
-)
-counts["YOUNGCHILD"] = counts["YOUNGCHILD"].astype("Int64")
-counts["PartyNumu10"] = (counts["num_6_9"] + counts["YOUNGCHILD"]).astype("Int64")
-
-counts = counts[["PartyNumu10", "PartyNum1017"]]
-
-# 6c) Build per-trip ACC_AGE columns for df_2 (version-safe)
-# (A) list of all companion ages per TRIPID
-acc_all = (
-    long.dropna(subset=["ACC_AGE"])
-        .astype({"ACC_AGE": "Int64"})
-        .groupby("TRIPID", as_index=True)["ACC_AGE"]
-        .apply(lambda s: sorted(s.tolist()))
-        .rename("ACC_AGE_all")
-)
-
-# (B) list of minor companion ages (<=17) per TRIPID  [NO 'na=' here]
-acc_minors = (
-    long.loc[ long["ACC_AGE"].le(17).fillna(False) ]
-        .astype({"ACC_AGE": "Int64"})
-        .groupby("TRIPID", as_index=True)["ACC_AGE"]
-        .apply(lambda s: sorted(s.tolist()))
-        .rename("ACC_AGE_minors")
-)
-
-# Merge these into df_2 (respondent table). If the series are empty, merge still creates the columns.
-df_2 = (
-    df_2
-    .merge(acc_all.to_frame(), on="TRIPID", how="left")
-    .merge(acc_minors.to_frame(), on="TRIPID", how="left")
-    .merge(counts, on="TRIPID", how="left")
-)
-
-# Replace NaNs with empty lists so the columns are always list-typed
-df_2["ACC_AGE_all"]    = df_2["ACC_AGE_all"].apply(lambda x: x if isinstance(x, list) else [])
-df_2["ACC_AGE_minors"] = df_2["ACC_AGE_minors"].apply(lambda x: x if isinstance(x, list) else [])
-df_2[["PartyNumu10", "PartyNum1017"]] = (
-    df_2[["PartyNumu10", "PartyNum1017"]].fillna(0).astype("Int64")
-)
-
-# If you want a single minors-only column alias:
-df_2["ACC_AGE"] = df_2["ACC_AGE_minors"]
-
-print(df_2["ACC_AGE_all"].map(len).describe(), "  # counts of companions per trip")
-print(df_2["ACC_AGE_minors"].map(len).describe(), "# counts of minor companions per trip")
-                        
+# Merge back
+out = counts[["acc_0_4", "acc_5_9", "PartyNumu10","PartyNum1017"]]
+df_2 = df_2.merge(out, on="TRIPID", how="left")
+df_2[["PartyNumu10","PartyNum1017"]] = df_2[["PartyNumu10","PartyNum1017"]].fillna(0).astype("Int64")
 
 acc_path = os.path.join(folder_path, "us_merged_filtered_acc.csv")
 df_2.to_csv(acc_path, index=False, encoding="utf-8-sig")
-long.to_csv(os.path.join(folder_path, "companions_long_with_ACC_AGE.csv"), index=False, encoding="utf-8-sig")
 ```
 
 ```{python}
@@ -767,13 +729,18 @@ df_2["PartyNum1017"].value_counts().sort_index()
 # Crosstab of both variables together (optional)
 pd.crosstab(df_2["PartyNumu10"], df_2["PartyNum1017"])
 ```
+```{python}
+# Trips where we inferred any 0–4
+sample = df_2.loc[df_2["PartyNumu10"] > 0, ["TRIPID","HH_ONTD","PartyNumu10","PartyNum1017"]].head()
+print(sample)
+```
 
 ```{python}
 import os
 import numpy as np
 import pandas as pd
 
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 dT_path = os.path.join(folder_path, "us_merged_filtered_acc.csv")
 dT = pd.read_csv(dT_path, encoding="utf-8-sig")
 

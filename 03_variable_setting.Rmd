@@ -30,7 +30,7 @@ import seaborn as sns
 
 ```{python}
 # Define the folder path
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 
 # Function to read CSV with encoding handling
 def read_csv_with_encoding(file_path):
@@ -1050,7 +1050,7 @@ NumChld //  household //	kids 0–17 in HH
 # Save the full data
 ```{python}
 # File paths
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 output_file = os.path.join(folder_path, "us_data_before_compression_hh_0to9_1.csv")
 dT.to_csv(output_file, index=False, encoding="utf-8-sig")
 ```
@@ -1058,7 +1058,7 @@ dT.to_csv(output_file, index=False, encoding="utf-8-sig")
 # Saved the reduced dimention
 ```{python}
 # Define file paths
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 output_file = os.path.join(folder_path, "us_data_reduced_hh_0to9_1.csv")
 
 # Reduce to one row per JourneyId

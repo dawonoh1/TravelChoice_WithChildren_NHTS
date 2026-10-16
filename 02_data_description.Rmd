@@ -15,12 +15,12 @@ import os
 # Import existing dataset
 ```{python, include=FALSE}
 #Total  households
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 file_path = os.path.join(folder_path, "us_merged_filtered.csv")
 dt = pd.read_csv(file_path, encoding="utf-8-sig")
 
 #Households with children
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 file_path = os.path.join(folder_path, "us_HHwithU10.csv")
 df = pd.read_csv(file_path, encoding="utf-8-sig")
 ```

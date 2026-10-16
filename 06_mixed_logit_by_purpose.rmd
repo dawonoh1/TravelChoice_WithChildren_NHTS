@@ -12,7 +12,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -488,7 +488,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -950,7 +950,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -1412,7 +1412,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -1873,7 +1873,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -2335,7 +2335,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -2806,7 +2806,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -3273,7 +3273,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -3741,7 +3741,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -4212,7 +4212,7 @@ import biogeme
 import biogeme.version as ver
 
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 ```
 
@@ -4679,7 +4679,7 @@ pandasResrults
 # How many Tours per each Household
 ```{python}
 # Load Data
-file_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts\us_data_reduced_hh_0to9_1_dropna.csv"
+file_path = "data/us_data_reduced_hh_0to9_1_dropna.csv"
 data = pd.read_csv(file_path)
 
 distribution_df = distribution.reset_index()

@@ -22,11 +22,12 @@
 *credentials*
 *token*
 
-# Biogeme output: keep only the most recent HTML report per model
+# Biogeme writes its output next to the scripts; the final reports are
+# copied into biogeme_output/ with readable names
 *.pickle
 *.iter
-Interaction_US*.html
-!Interaction_US~36.html
-MixedLogitUS.html
-MixedLogitUS~*.html
-!MixedLogitUS~04.html
+/Interaction_US*
+/MixedLogitUS*
+
+# Earlier working versions (kept locally only)
+archive/

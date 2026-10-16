@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 ```{python, include=FALSE}
 # Define file paths
-folder_path = r"C:\Users\ohdaw\OneDrive - Harvard University\tu_data\us_nhts"
+folder_path = "data"
 file_path = os.path.join(folder_path, "us_data_reduced_hh_0to9_1.csv")
 #output_path = os.path.join(folder_path, ".csv")
 
