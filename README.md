@@ -1,6 +1,6 @@
 # Travel Choices of Parents with Young Children — NHTS 2017
 
-When parents of young children leave home for a tour of trips, which of those trips include their child? This project builds **home-based tours** from the 2017 National Household Travel Survey (NHTS) trip file. It classifies each tour by how much of it a child under 10 joins, and estimates **discrete choice models** (multinomial logit with interactions, and mixed logit) to see how trip purpose, tour structure, household composition, and gender shape that outcome.
+When parents of young children leave home for a tour of trips, which of those trips include their child? This project uses **home-based tours** from the 2017 National Household Travel Survey (NHTS) trip file. It classifies each tour by how much of it a child under 10 joins, and estimates **discrete choice models** (multinomial logit with interactions, and mixed logit) to see how trip purpose, tour structure, household composition, and gender shape that outcome.
 
 ## Outcome
 
