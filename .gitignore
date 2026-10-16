@@ -1,0 +1,32 @@
+# Data files
+*.csv
+*.rds
+*.RDS
+*.sav
+*.sas7bdat
+
+# R session files
+.Rhistory
+.RData
+.RDataTmp*
+.Rproj.user/
+.Ruserdata
+
+# Keys and secrets
+.Renviron
+.env
+*.key
+*.pem
+*.p12
+*secret*
+*credentials*
+*token*
+
+# Biogeme output: keep only the most recent HTML report per model
+*.pickle
+*.iter
+Interaction_US*.html
+!Interaction_US~36.html
+MixedLogitUS.html
+MixedLogitUS~*.html
+!MixedLogitUS~04.html
